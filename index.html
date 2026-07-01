@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>展示会 在庫管理</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <div>
+      <div class="subtitle">EXHIBITION</div>
+      <h1>在庫管理</h1>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn-scan" onclick="openScanner('detail')">📷 スキャン</button>
+      <button class="btn-primary" onclick="openModal()">＋ 商品を追加</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="summary">
+      <div class="summary-card blue">
+        <div class="label">総在庫数</div>
+        <div class="value" id="totalStock">0</div>
+      </div>
+      <div class="summary-card yellow">
+        <div class="label">残りわずか</div>
+        <div class="value" id="lowCount">0</div>
+      </div>
+      <div class="summary-card red">
+        <div class="label">在庫切れ</div>
+        <div class="value" id="emptyCount">0</div>
+      </div>
+    </div>
+
+    <input type="text" id="searchInput" placeholder="商品名・SKU・カテゴリで検索..." oninput="renderList()" />
+    <div id="itemList"></div>
+  </main>
+
+  <!-- ========== 商品追加・編集モーダル ========== -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal form-modal">
+      <h2 id="modalTitle">商品を追加</h2>
+
+      <!-- 基本情報 -->
+      <div class="form-section-label">基本情報</div>
+      <div class="form-group">
+        <label>商品名 *</label>
+        <input type="text" id="inputName" placeholder="例: Tシャツ" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>SKU / バーコード</label>
+          <div style="display:flex; gap:6px;">
+            <input type="text" id="inputSku" placeholder="例: 4901234567890" style="flex:1;" />
+            <button class="btn-scan-small" onclick="openScanner('register')" title="スキャン">📷</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>カテゴリ</label>
+          <input type="text" id="inputCategory" placeholder="例: アパレル" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>初期在庫数</label>
+        <input type="number" id="inputStock" placeholder="0" min="0" />
+      </div>
+
+      <!-- 価格情報 -->
+      <div class="form-section-label" style="margin-top:16px;">価格情報</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>定価（円）</label>
+          <input type="number" id="inputPriceOriginal" placeholder="例: 5000" min="0" />
+        </div>
+        <div class="form-group">
+          <label>販売価格（円）</label>
+          <input type="number" id="inputPriceSell" placeholder="例: 4500" min="0" />
+        </div>
+        <div class="form-group">
+          <label>割引価格（円）</label>
+          <input type="number" id="inputPriceDiscount" placeholder="例: 3500" min="0" />
+        </div>
+      </div>
+
+      <!-- カスタムフィールド -->
+      <div class="form-section-label" style="margin-top:16px;">
+        カスタム情報
+        <button class="btn-add-field" onclick="addCustomField()">＋ 項目を追加</button>
+      </div>
+      <div id="customFields"></div>
+
+      <div class="modal-buttons" style="margin-top:20px;">
+        <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+        <button class="btn-submit" id="modalSubmitBtn" onclick="submitModal()">追加する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== スキャナーモーダル ========== -->
+  <div class="modal-overlay" id="scannerOverlay">
+    <div class="modal scanner-modal">
+      <h2 id="scannerTitle">📷 バーコードをスキャン</h2>
+      <p class="scanner-hint">カメラにバーコード・QRコードを向けてください</p>
+      <div class="scanner-wrap">
+        <video id="scannerVideo" playsinline></video>
+        <div class="scan-line"></div>
+        <div class="scan-frame"></div>
+      </div>
+      <div id="scanResult" class="scan-result">スキャン待機中...</div>
+      <button class="btn-cancel" style="width:100%; margin-top:12px;" onclick="closeScanner()">キャンセル</button>
+    </div>
+  </div>
+
+  <!-- ========== 商品詳細モーダル ========== -->
+  <div class="modal-overlay" id="detailOverlay" onclick="closeDetail(event)">
+    <div class="modal detail-modal">
+
+      <div class="detail-header">
+        <div style="flex:1;">
+          <div class="detail-name" id="detailName"></div>
+          <div class="detail-meta" id="detailMeta"></div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+          <div id="detailBadge"></div>
+          <button class="btn-edit" onclick="openEditModal()">✏️ 編集</button>
+        </div>
+      </div>
+
+      <!-- 価格エリア -->
+      <div id="detailPrices" class="detail-prices"></div>
+
+      <hr class="detail-divider" />
+
+      <!-- 在庫数 -->
+      <div class="detail-stock-section">
+        <div class="detail-stock-label">現在の在庫数</div>
+        <div class="detail-stock-num" id="detailStockNum">0</div>
+      </div>
+
+      <!-- ＋ / − ボタン -->
+      <div class="detail-controls">
+        <button class="detail-btn-minus" onclick="detailChange(-1)">−</button>
+        <button class="detail-btn-plus"  onclick="detailChange(+1)">＋</button>
+      </div>
+
+      <!-- まとめて増減 -->
+      <div class="detail-manual">
+        <div class="detail-manual-label">まとめて増減</div>
+        <div class="detail-manual-row">
+          <input type="number" id="manualInput" placeholder="例: 5" min="1" />
+          <button class="detail-manual-btn minus" onclick="detailManual(-1)">− 減らす</button>
+          <button class="detail-manual-btn plus"  onclick="detailManual(+1)">＋ 増やす</button>
+        </div>
+      </div>
+
+      <!-- カスタム情報 -->
+      <div id="detailCustomFields"></div>
+
+      <hr class="detail-divider" />
+      <button class="btn-cancel" style="width:100%;" onclick="closeDetail()">閉じる</button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <script src="script.js"></script>
+</body>
+</html>

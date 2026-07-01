@@ -1,0 +1,761 @@
+/* ============================================
+   style.css — 見た目の設定ファイル
+   HTML の各要素に対してデザインを当てていく
+============================================ */
+
+/* ページ全体のリセットと基本設定 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+  background: #f5f6fa;
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+/* ===== ヘッダー ===== */
+header {
+  background: #0f1b35;
+  color: white;
+  padding: 22px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+}
+
+header .subtitle {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #7b91c4;
+  margin-bottom: 4px;
+}
+
+header h1 {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+/* ===== ボタン共通 ===== */
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-primary {
+  background: #3a6df0;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.btn-primary:hover {
+  background: #2d5cd8;
+}
+
+/* ===== メインコンテンツエリア ===== */
+main {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ===== サマリーカード ===== */
+.summary {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.summary-card {
+  flex: 1;
+  background: white;
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+}
+
+.summary-card.blue   { border-top: 4px solid #3a6df0; }
+.summary-card.yellow { border-top: 4px solid #b07800; }
+.summary-card.red    { border-top: 4px solid #b71c1c; }
+
+.summary-card .label {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+.summary-card .value {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.summary-card.blue   .value { color: #3a6df0; }
+.summary-card.yellow .value { color: #b07800; }
+.summary-card.red    .value { color: #b71c1c; }
+
+/* ===== 検索ボックス ===== */
+#searchInput {
+  width: 100%;
+  margin-top: 20px;
+  padding: 10px 16px;
+  border: 1.5px solid #dde1ea;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  background: white;
+}
+
+/* ===== 商品リスト ===== */
+#itemList {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-left: 5px solid #1a7a45;
+}
+
+.item-card.low   { border-left-color: #f0a500; }
+.item-card.empty { border-left-color: #b71c1c; }
+
+.item-info { flex: 1; }
+
+.item-name {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.item-meta {
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* バッジ */
+.badge {
+  display: inline-block;
+  border-radius: 6px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.badge.green  { background: #e6f7ee; color: #1a7a45; }
+.badge.yellow { background: #fff8e1; color: #b07800; }
+.badge.red    { background: #fdecea; color: #b71c1c; }
+
+/* ===== 在庫数コントロール ===== */
+.stock-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stock-control .stock-num {
+  min-width: 40px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f1b35;
+}
+
+.stock-control .stock-num.empty { color: #b71c1c; }
+
+.btn-minus,
+.btn-plus {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-minus {
+  background: #f5f6fa;
+  border: 1.5px solid #dde1ea;
+  color: #444;
+}
+
+.btn-plus {
+  background: #3a6df0;
+  border: 1.5px solid #3a6df0;
+  color: white;
+}
+
+.btn-delete {
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 18px;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.btn-delete:hover { color: #b71c1c; }
+
+/* ===== モーダル ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  padding: 28px;
+  width: 340px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+
+.modal h2 {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 18px;
+}
+
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid #dde1ea;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.btn-cancel {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1.5px solid #dde1ea;
+  background: #f5f6fa;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.btn-submit {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #3a6df0;
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* ===== トースト通知 ===== */
+#toast {
+  display: none;
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  z-index: 200;
+  white-space: nowrap;
+}
+
+/* ===== 空リストメッセージ ===== */
+.empty-msg {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  color: #aaa;
+  font-size: 15px;
+}
+
+
+/* ===== スキャンボタン ===== */
+.btn-scan {
+  background: #1a7a45;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn-scan:hover { background: #155f36; }
+
+.btn-scan-small {
+  background: #1a7a45;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* ===== スキャナーモーダル ===== */
+.scanner-modal { width: 380px; }
+
+.scanner-hint {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* カメラ映像ラッパー */
+.scanner-wrap {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+  aspect-ratio: 4/3; /* 映像の縦横比を固定 */
+}
+
+#scannerVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 10px;
+}
+
+/* ===== 赤いスキャンライン ===== */
+.scan-line {
+  position: absolute;
+  left: 5%;
+  width: 90%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #ff3b3b, transparent);
+  box-shadow: 0 0 10px 3px rgba(255, 59, 59, 0.8);
+  border-radius: 2px;
+  animation: scanMove 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 10;
+}
+
+@keyframes scanMove {
+  0%   { top: 10%; }
+  50%  { top: 85%; }
+  100% { top: 10%; }
+}
+
+/* ===== 読み取り枠（四隅のコーナー） ===== */
+.scan-frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60%;
+  height: 55%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* 四隅をborderで表現 */
+.scan-frame::before,
+.scan-frame::after {
+  content: "";
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-color: #fff;
+  border-style: solid;
+}
+
+.scan-frame::before {
+  top: 0; left: 0;
+  border-width: 3px 0 0 3px;
+  border-radius: 3px 0 0 0;
+  box-shadow: /* 右上・左下・右下の角を疑似要素なしで再現 */
+    calc(100% - 3px) 0 0 0 #fff,          /* 右上横 */
+    0 calc(100% - 3px) 0 0 #fff;          /* 左下縦 */
+}
+
+.scan-frame::after {
+  bottom: 0; right: 0;
+  border-width: 0 3px 3px 0;
+  border-radius: 0 0 3px 0;
+}
+
+/* ===== 読み取り結果 ===== */
+.scan-result {
+  margin-top: 12px;
+  min-height: 48px;
+  background: #f5f6fa;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #888;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ========== 商品詳細モーダル ========== */
+.detail-modal {
+  width: 360px;
+}
+
+/* 商品名・バッジ行 */
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+
+.detail-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f1b35;
+}
+
+.detail-meta {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+
+.detail-divider {
+  border: none;
+  border-top: 1.5px solid #f0f1f5;
+  margin: 18px 0;
+}
+
+/* 在庫数（大きく） */
+.detail-stock-section {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.detail-stock-label {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 6px;
+}
+
+.detail-stock-num {
+  font-size: 56px;
+  font-weight: 900;
+  color: #0f1b35;
+  line-height: 1;
+}
+
+.detail-stock-num.empty  { color: #b71c1c; }
+.detail-stock-num.low    { color: #b07800; }
+
+/* ＋ / − ボタン（大きめ） */
+.detail-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.detail-btn-minus,
+.detail-btn-plus {
+  flex: 1;
+  height: 52px;
+  border-radius: 10px;
+  font-size: 26px;
+  font-weight: 800;
+  border: none;
+}
+
+.detail-btn-minus {
+  background: #f0f1f5;
+  color: #444;
+}
+
+.detail-btn-minus:hover { background: #e0e1e8; }
+
+.detail-btn-plus {
+  background: #3a6df0;
+  color: white;
+}
+
+.detail-btn-plus:hover { background: #2d5cd8; }
+
+/* まとめて増減エリア */
+.detail-manual {
+  background: #f8f9fc;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+}
+
+.detail-manual-label {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.detail-manual-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.detail-manual-row input {
+  width: 72px;
+  padding: 9px 10px;
+  border: 1.5px solid #dde1ea;
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  text-align: center;
+}
+
+.detail-manual-btn {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 8px;
+  border: none;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.detail-manual-btn.minus {
+  background: #fdecea;
+  color: #b71c1c;
+}
+
+.detail-manual-btn.minus:hover { background: #f8d0cd; }
+
+.detail-manual-btn.plus {
+  background: #e6f7ee;
+  color: #1a7a45;
+}
+
+.detail-manual-btn.plus:hover { background: #c8edda; }
+
+/* ========== フォームモーダル（追加・編集） ========== */
+.form-modal {
+  width: 460px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.form-section-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #7b91c4;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+/* カスタムフィールド入力行 */
+.custom-field-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.cf-label {
+  width: 130px;
+  padding: 8px 10px;
+  border: 1.5px solid #dde1ea;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+
+.cf-value {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1.5px solid #dde1ea;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+
+.cf-remove {
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 16px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.cf-remove:hover { color: #b71c1c; }
+
+.btn-add-field {
+  background: #e3f0ff;
+  color: #1a4fa0;
+  border: none;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ========== 商品カードの価格表示 ========== */
+.card-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a4fa0;
+  background: #e3f0ff;
+  border-radius: 5px;
+  padding: 1px 8px;
+}
+
+/* ========== 詳細モーダル：価格エリア ========== */
+.price-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.price-item {
+  flex: 1;
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.price-item.original {
+  background: #f5f6fa;
+}
+
+.price-item.sell {
+  background: #e3f0ff;
+}
+
+.price-item.discount {
+  background: #fdecea;
+}
+
+.price-label {
+  font-size: 10px;
+  color: #888;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.price-item.sell .price-label     { color: #1a4fa0; }
+.price-item.discount .price-label { color: #b71c1c; }
+
+.price-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f1b35;
+}
+
+.price-item.sell     .price-value { color: #1a4fa0; }
+.price-item.discount .price-value { color: #b71c1c; }
+
+/* ========== 詳細モーダル：カスタムフィールド表示 ========== */
+.cf-display {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cf-display-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f8f9fc;
+  border-radius: 8px;
+}
+
+.cf-display-label {
+  font-size: 12px;
+  color: #888;
+  font-weight: 600;
+  min-width: 80px;
+}
+
+.cf-display-value {
+  font-size: 14px;
+  color: #0f1b35;
+  font-weight: 500;
+  text-align: right;
+}
+
+/* 編集ボタン */
+.btn-edit {
+  background: #f5f6fa;
+  border: 1.5px solid #dde1ea;
+  border-radius: 7px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #555;
+  cursor: pointer;
+}
+
+.btn-edit:hover {
+  background: #e8eaf0;
+}
