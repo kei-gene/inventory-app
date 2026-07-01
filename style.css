@@ -759,3 +759,81 @@ main {
 .btn-edit:hover {
   background: #e8eaf0;
 }
+
+/* ========== 写真アップロードエリア ========== */
+.photo-upload-area {
+  position: relative;
+  border: 2px dashed #dde1ea;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  background: #f8f9fc;
+  transition: border-color 0.2s;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-upload-area:hover {
+  border-color: #3a6df0;
+  background: #f0f4ff;
+}
+
+#photoPreview {
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 8px;
+  display: none;
+}
+
+#photoPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.photo-icon { font-size: 28px; }
+
+.photo-hint {
+  font-size: 13px;
+  color: #555;
+  font-weight: 600;
+}
+
+.photo-hint-sub {
+  font-size: 11px;
+  color: #aaa;
+}
+
+.photo-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0,0,0,0.5);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.photo-remove:hover { background: #b71c1c; }
+
+/* ========== 詳細モーダルの写真 ========== */
+.detail-photo {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #f5f6fa;
+  margin-bottom: 14px;
+  display: block;
+}

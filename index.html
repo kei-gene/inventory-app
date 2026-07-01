@@ -85,6 +85,20 @@
         </div>
       </div>
 
+      <!-- 写真 -->
+      <div class="form-section-label" style="margin-top:16px;">商品写真（任意）</div>
+      <div class="photo-upload-area" id="photoUploadArea" onclick="document.getElementById('inputPhoto').click()">
+        <img id="photoPreview" src="" alt="" style="display:none;" />
+        <div id="photoPlaceholder">
+          <div class="photo-icon">📷</div>
+          <div class="photo-hint">クリックして写真を選択</div>
+          <div class="photo-hint-sub">JPG・PNG・WEBP対応</div>
+        </div>
+        <button class="photo-remove" id="photoRemoveBtn" onclick="removePhoto(event)" style="display:none;">✕ 削除</button>
+      </div>
+      <!-- type="file"は非表示にしてphoto-upload-areaのクリックで起動 -->
+      <input type="file" id="inputPhoto" accept="image/*" style="display:none;" onchange="handlePhotoSelect(event)" />
+
       <!-- カスタムフィールド -->
       <div class="form-section-label" style="margin-top:16px;">
         カスタム情報
@@ -117,6 +131,11 @@
   <!-- ========== 商品詳細モーダル ========== -->
   <div class="modal-overlay" id="detailOverlay" onclick="closeDetail(event)">
     <div class="modal detail-modal">
+
+      <!-- 写真（登録されていれば表示） -->
+      <div id="detailPhotoWrap" style="display:none;">
+        <img id="detailPhoto" src="" alt="" class="detail-photo" />
+      </div>
 
       <div class="detail-header">
         <div style="flex:1;">

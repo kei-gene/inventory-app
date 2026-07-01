@@ -159,6 +159,7 @@ function openModal() {
     document.getElementById(id).value = "";
   });
   document.getElementById("customFields").innerHTML = "";
+  resetPhotoPreview();
   document.getElementById("modalOverlay").classList.add("active");
 }
 
@@ -182,6 +183,13 @@ function openEditModal() {
   // カスタムフィールドを復元
   document.getElementById("customFields").innerHTML = "";
   (item.customFields || []).forEach(f => addCustomField(f.label, f.value));
+
+  // 写真を復元
+  if (item.photo) {
+    setPhotoPreview(item.photo);
+  } else {
+    resetPhotoPreview();
+  }
 
   document.getElementById("detailOverlay").classList.remove("active");
   document.getElementById("modalOverlay").classList.add("active");
@@ -209,10 +217,10 @@ function submitModal() {
 
   if (editingId === null) {
     // 新規追加
-    items.push({ id: Date.now(), name, sku, category, stock, priceOriginal, priceSell, priceDiscount, customFields });
+    items.push({ id: Date.now(), name, sku, category, stock, priceOriginal, priceSell, priceDiscount, customFields, photo: currentPhoto });
     showToast("商品を追加しました");
   } else {
-    // 編集保存（在庫数は詳細モーダルで管理するので上書きしない）
+    // 編集保存
     const item = items.find(i => i.id === editingId);
     if (item) {
       item.name          = name;
@@ -223,9 +231,9 @@ function submitModal() {
       item.priceSell     = priceSell;
       item.priceDiscount = priceDiscount;
       item.customFields  = customFields;
+      item.photo         = currentPhoto; // 写真を更新（nullなら削除）
     }
     showToast("変更を保存しました");
-    // 詳細を再表示
     setTimeout(() => { openDetail(editingId); }, 100);
   }
 
@@ -275,6 +283,17 @@ function refreshDetail() {
   document.getElementById("detailName").textContent = item.name;
   document.getElementById("detailMeta").textContent =
     [item.sku ? "SKU: " + item.sku : "", item.category].filter(Boolean).join("　");
+
+  // 写真
+  const photoWrap = document.getElementById("detailPhotoWrap");
+  const photoImg  = document.getElementById("detailPhoto");
+  if (item.photo) {
+    photoImg.src = item.photo;
+    photoWrap.style.display = "block";
+  } else {
+    photoImg.src = "";
+    photoWrap.style.display = "none";
+  }
 
   // バッジ
   let badgeHtml = '<span class="badge green">在庫あり</span>';
@@ -413,4 +432,76 @@ function closeScanner() {
   document.getElementById("scannerOverlay").classList.remove("active");
   document.getElementById("scanResult").innerHTML = "";
   scanDone = false;
+}
+
+
+// ============================================
+//   写真アップロード機能
+// ============================================
+
+let currentPhoto = null; // 現在選択中の写真（Base64文字列 or null）
+
+// ===== 写真が選択されたとき =====
+function handlePhotoSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Canvasで圧縮してBase64に変換
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      // 最大600pxにリサイズ（縦横比は維持）
+      const MAX = 600;
+      let w = img.width;
+      let h = img.height;
+      if (w > h && w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      else if (h > MAX)     { w = Math.round(w * MAX / h); h = MAX; }
+
+      const canvas = document.createElement("canvas");
+      canvas.width  = w;
+      canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+
+      // JPEG品質80%で圧縮
+      const compressed = canvas.toDataURL("image/jpeg", 0.8);
+      currentPhoto = compressed;
+      setPhotoPreview(compressed);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ===== プレビューを表示 =====
+function setPhotoPreview(src) {
+  const preview     = document.getElementById("photoPreview");
+  const placeholder = document.getElementById("photoPlaceholder");
+  const removeBtn   = document.getElementById("photoRemoveBtn");
+
+  preview.src           = src;
+  preview.style.display = "block";
+  placeholder.style.display = "none";
+  removeBtn.style.display   = "inline-block";
+}
+
+// ===== プレビューをリセット =====
+function resetPhotoPreview() {
+  currentPhoto = null;
+  const preview     = document.getElementById("photoPreview");
+  const placeholder = document.getElementById("photoPlaceholder");
+  const removeBtn   = document.getElementById("photoRemoveBtn");
+  const fileInput   = document.getElementById("inputPhoto");
+
+  preview.src           = "";
+  preview.style.display = "none";
+  placeholder.style.display = "flex";
+  removeBtn.style.display   = "none";
+  fileInput.value = ""; // ファイル選択をリセット
+}
+
+// ===== 写真を削除 =====
+function removePhoto(event) {
+  event.stopPropagation(); // upload-areaのクリックが発火しないように
+  resetPhotoPreview();
 }
