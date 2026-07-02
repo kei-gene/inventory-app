@@ -33,6 +33,29 @@ function saveItems() {
 
 const LOW = 3;
 
+// ===== 表示モード =====
+let currentView = localStorage.getItem("viewMode") || "list"; // list / grid2 / grid3
+
+function setView(mode) {
+  currentView = mode;
+  localStorage.setItem("viewMode", mode);
+
+  // タブのアクティブ状態を切り替え
+  ["list","grid2","grid3"].forEach(m => {
+    document.getElementById("tab-" + m).classList.toggle("active", m === mode);
+  });
+
+  renderList();
+}
+
+// ページ読み込み時にタブの初期状態を即時反映
+function initViewTabs() {
+  ["list","grid2","grid3"].forEach(m => {
+    const tab = document.getElementById("tab-" + m);
+    if (tab) tab.classList.toggle("active", m === currentView);
+  });
+}
+
 // ===== 金額フォーマット =====
 function yen(val) {
   if (!val && val !== 0) return null;
@@ -52,45 +75,77 @@ function renderList() {
 
   if (filtered.length === 0) {
     listEl.innerHTML = '<div class="empty-msg">商品が見つかりません</div>';
+    listEl.className = "";
     updateSummary();
     return;
   }
 
-  listEl.innerHTML = filtered.map(item => {
-    let cardClass = "";
-    let badge = '<span class="badge green">在庫あり</span>';
-    if (item.stock === 0)       { cardClass = "empty"; badge = '<span class="badge red">在庫切れ</span>'; }
-    else if (item.stock <= LOW) { cardClass = "low";   badge = '<span class="badge yellow">残りわずか</span>'; }
-
-    const numClass = item.stock === 0 ? "stock-num empty" : "stock-num";
-
-    // 価格表示（販売価格を優先）
-    const priceDisplay = item.priceSell
-      ? `<div class="card-price">${yen(item.priceSell)}</div>`
-      : "";
-
-    return `
-      <div class="item-card ${cardClass}" onclick="openDetail(${item.id})" style="cursor:pointer;">
-        <div class="item-info">
-          <div class="item-name">${item.name}</div>
-          <div class="item-meta">
-            ${item.sku ? "SKU: " + item.sku : ""}
-            ${item.category ? "　" + item.category : ""}
+  // リスト表示
+  if (currentView === "list") {
+    listEl.className = "view-list";
+    listEl.innerHTML = filtered.map(item => {
+      let cardClass = "";
+      let badge = '<span class="badge green">在庫あり</span>';
+      if (item.stock === 0)       { cardClass = "empty"; badge = '<span class="badge red">在庫切れ</span>'; }
+      else if (item.stock <= LOW) { cardClass = "low";   badge = '<span class="badge yellow">残りわずか</span>'; }
+      const numClass = item.stock === 0 ? "stock-num empty" : "stock-num";
+      const priceDisplay = item.priceSell ? `<div class="card-price">${yen(item.priceSell)}</div>` : "";
+      const listPhoto = item.photo
+        ? `<img src="${item.photo}" class="list-card-photo" alt="${item.name}" />`
+        : `<div class="list-card-photo list-card-nophoto">NO<br>IMAGE</div>`;
+      return `
+        <div class="item-card ${cardClass}" onclick="openDetail(${item.id})" style="cursor:pointer;">
+          ${listPhoto}
+          <div class="item-info">
+            <div class="item-name">${item.name}</div>
+            <div class="item-meta">
+              ${item.sku ? "SKU: " + item.sku : ""}
+              ${item.category ? "　" + item.category : ""}
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+              ${badge}${priceDisplay}
+            </div>
           </div>
-          <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
-            ${badge}
-            ${priceDisplay}
+          <div class="stock-control">
+            <button class="btn-minus" onclick="event.stopPropagation(); changeStock(${item.id}, -1)">−</button>
+            <span class="${numClass}">${item.stock}</span>
+            <button class="btn-plus"  onclick="event.stopPropagation(); changeStock(${item.id}, +1)">＋</button>
           </div>
-        </div>
-        <div class="stock-control">
-          <button class="btn-minus" onclick="event.stopPropagation(); changeStock(${item.id}, -1)">−</button>
-          <span class="${numClass}">${item.stock}</span>
-          <button class="btn-plus"  onclick="event.stopPropagation(); changeStock(${item.id}, +1)">＋</button>
-        </div>
-        <button class="btn-delete" onclick="event.stopPropagation(); deleteItem(${item.id})" title="削除">✕</button>
-      </div>
-    `;
-  }).join("");
+          <button class="btn-delete" onclick="event.stopPropagation(); deleteItem(${item.id})" title="削除">✕</button>
+        </div>`;
+    }).join("");
+
+  // グリッド表示（2列・3列共通）
+  } else {
+    listEl.className = currentView === "grid2" ? "view-grid2" : "view-grid3";
+    listEl.innerHTML = filtered.map(item => {
+      let cardClass = "";
+      let badge = '<span class="badge green">在庫あり</span>';
+      if (item.stock === 0)       { cardClass = "empty"; badge = '<span class="badge red">在庫切れ</span>'; }
+      else if (item.stock <= LOW) { cardClass = "low";   badge = '<span class="badge yellow">残りわずか</span>'; }
+      const numClass = item.stock === 0 ? "stock-num empty" : "stock-num";
+      const photoHtml = item.photo
+        ? `<img src="${item.photo}" class="grid-photo" alt="${item.name}" />`
+        : `<div class="grid-photo-placeholder">NO IMAGE</div>`;
+      return `
+        <div class="grid-card ${cardClass}" onclick="openDetail(${item.id})" style="cursor:pointer;">
+          ${photoHtml}
+          <div class="grid-body">
+            <div class="grid-name">${item.name}</div>
+            <div class="grid-meta">${item.category || ""}</div>
+            ${item.priceSell ? `<div class="grid-price">${yen(item.priceSell)}</div>` : ""}
+            <div class="grid-footer">
+              ${badge}
+              <div class="grid-stock-control">
+                <button class="btn-minus" onclick="event.stopPropagation(); changeStock(${item.id}, -1)">−</button>
+                <span class="${numClass}" style="font-size:16px;">${item.stock}</span>
+                <button class="btn-plus"  onclick="event.stopPropagation(); changeStock(${item.id}, +1)">＋</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }).join("");
+  }
 
   updateSummary();
 }
@@ -138,6 +193,7 @@ function showToast(msg, color = "#1a7a45") {
   toastTimer = setTimeout(() => { toast.style.display = "none"; }, 2000);
 }
 
+initViewTabs();
 renderList();
 
 
@@ -374,20 +430,82 @@ async function openScanner(mode) {
   document.getElementById("scannerOverlay").classList.add("active");
 
   try {
-    codeReader = new ZXing.BrowserMultiFormatReader();
+    const hints = new Map();
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+      ZXing.BarcodeFormat.EAN_13,
+      ZXing.BarcodeFormat.EAN_8,
+      ZXing.BarcodeFormat.QR_CODE,
+      ZXing.BarcodeFormat.CODE_128,
+      ZXing.BarcodeFormat.UPC_A,
+    ]);
+    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+
+    codeReader = new ZXing.BrowserMultiFormatReader(hints);
     const devices = await codeReader.listVideoInputDevices();
     if (devices.length === 0) throw new Error("カメラが見つかりません");
+
+    let lastCode    = null;
+    let matchCount  = 0;
+    const CONFIRM   = 5; // 同じ番号が5回連続で読めたら候補として表示
+
     scanControls = await codeReader.decodeFromVideoDevice(
       devices[0].deviceId,
       document.getElementById("scannerVideo"),
       (result, error) => {
-        if (result && !scanDone) { scanDone = true; handleScanResult(result.getText()); }
+        if (!result || scanDone) return;
+        const code = result.getText();
+
+        if (code === lastCode) {
+          matchCount++;
+          if (matchCount >= CONFIRM && !scanDone) {
+            // 候補として表示し、ユーザーに確認させる
+            showScanCandidate(code);
+          }
+        } else {
+          lastCode   = code;
+          matchCount = 1;
+        }
       }
     );
   } catch (err) {
     resultEl.textContent = "⚠️ カメラを起動できませんでした: " + err.message;
     resultEl.style.color = "#b71c1c";
   }
+}
+
+// ===== 読み取り候補を表示してユーザーに確認させる =====
+function showScanCandidate(code) {
+  const resultEl = document.getElementById("scanResult");
+
+  // すでに候補表示中なら無視
+  if (resultEl.dataset.candidate === code) return;
+  resultEl.dataset.candidate = code;
+
+  resultEl.style.color = "#1a4fa0";
+  resultEl.innerHTML = `
+    <div style="margin-bottom:8px; font-size:13px; color:#555;">読み取りました</div>
+    <div style="font-size:18px; font-weight:800; letter-spacing:2px; margin-bottom:12px;">${code}</div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn-primary" style="flex:1;" onclick="confirmScan('${code}')">✅ これで確定</button>
+      <button class="btn-cancel"  style="flex:1;" onclick="retryScan()">🔄 読み直す</button>
+    </div>
+  `;
+}
+
+// ===== 確定 =====
+function confirmScan(code) {
+  scanDone = true;
+  stopScanner();
+  handleScanResult(code);
+}
+
+// ===== 読み直す =====
+function retryScan() {
+  const resultEl = document.getElementById("scanResult");
+  resultEl.innerHTML = "スキャン待機中...";
+  resultEl.style.color = "#888";
+  delete resultEl.dataset.candidate;
+  // scanDoneはfalseのままなのでスキャンは継続している
 }
 
 function handleScanResult(code) {

@@ -117,9 +117,6 @@ main {
 /* ===== 商品リスト ===== */
 #itemList {
   margin-top: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
 
 .item-card {
@@ -836,4 +833,184 @@ main {
   background: #f5f6fa;
   margin-bottom: 14px;
   display: block;
+}
+
+/* ========== 表示切り替えタブ ========== */
+.view-tabs {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
+.view-tab {
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1.5px solid #dde1ea;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.view-tab:hover {
+  border-color: #3a6df0;
+  color: #3a6df0;
+}
+
+.view-tab.active {
+  background: #3a6df0;
+  border-color: #3a6df0;
+  color: #fff;
+}
+
+/* ========== リスト表示 ========== */
+.view-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ========== グリッド2列 ========== */
+.view-grid2 {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+/* ========== グリッド3列 ========== */
+.view-grid3 {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+/* ========== グリッドカード ========== */
+.grid-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+  overflow: hidden;
+  border-top: 4px solid #1a7a45;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.15s;
+}
+
+.grid-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.grid-card.low   { border-top-color: #f0a500; }
+.grid-card.empty { border-top-color: #b71c1c; }
+
+/* 写真エリア */
+.grid-photo {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  display: block;
+  background: #f5f6fa;
+}
+
+.grid-photo-placeholder {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: #f5f6fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: #ccc;
+}
+
+/* カード本体 */
+.grid-body {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.grid-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: #0f1b35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.grid-meta {
+  font-size: 11px;
+  color: #aaa;
+}
+
+.grid-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a4fa0;
+}
+
+/* カード下部：バッジ＋在庫コントロール */
+.grid-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.grid-stock-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.grid-stock-control .btn-minus,
+.grid-stock-control .btn-plus {
+  width: 28px;
+  height: 28px;
+  font-size: 16px;
+  border-radius: 6px;
+}
+
+/* ========== リスト表示の写真サムネイル ========== */
+.list-card-photo {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: #f5f6fa;
+}
+
+/* ========== NO IMAGE プレースホルダー ========== */
+.list-card-nophoto {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef0f5;
+  color: #bbb;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.grid-photo-placeholder {
+  background: #eef0f5;
+  color: #bbb;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }

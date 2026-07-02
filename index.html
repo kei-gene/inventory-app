@@ -36,6 +36,14 @@
     </div>
 
     <input type="text" id="searchInput" placeholder="商品名・SKU・カテゴリで検索..." oninput="renderList()" />
+
+    <!-- 表示切り替えタブ -->
+    <div class="view-tabs">
+      <button class="view-tab active" id="tab-list"   onclick="setView('list')">  ☰ リスト</button>
+      <button class="view-tab"        id="tab-grid2"  onclick="setView('grid2')"> ⊞ 2列</button>
+      <button class="view-tab"        id="tab-grid3"  onclick="setView('grid3')"> ⊟ 3列</button>
+    </div>
+
     <div id="itemList"></div>
   </main>
 
