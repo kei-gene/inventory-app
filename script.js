@@ -31,6 +31,27 @@ function saveItems() {
   localStorage.setItem("inventory_items", JSON.stringify(items));
 }
 
+// ===== 履歴データ =====
+let inventoryHistory = JSON.parse(localStorage.getItem("inventory_history") || "[]");
+
+function saveHistory() {
+  localStorage.setItem("inventory_history", JSON.stringify(inventoryHistory));
+}
+
+// 履歴を1件追加
+function addHistory(type, itemName, detail) {
+  inventoryHistory.unshift({
+    id:       Date.now(),
+    type,       // "stock_change" / "item_add" / "item_delete" / "item_edit"
+    itemName,
+    detail,     // stock_change: "+1"など / item_edit: 変更配列 / その他: 文字列
+    date:     new Date().toISOString(),
+  });
+  // 最大1000件で自動トリム（容量対策）
+  if (inventoryHistory.length > 1000) inventoryHistory = inventoryHistory.slice(0, 1000);
+  saveHistory();
+}
+
 const LOW = 3;
 
 // ===== 表示モード =====
@@ -161,12 +182,16 @@ function updateSummary() {
 }
 
 // ===== 在庫増減 =====
-function changeStock(id, delta) {
+// recordHistory: trueのときだけ履歴に記録（まとめて増減のときのみ）
+function changeStock(id, delta, recordHistory = false) {
   const item = items.find(i => i.id === id);
   if (!item) return;
   if (delta < 0 && item.stock === 0) { showToast("在庫がすでに0です", "#b71c1c"); return; }
   item.stock = Math.max(0, item.stock + delta);
   saveItems();
+  if (recordHistory) {
+    addHistory("stock_change", item.name, (delta > 0 ? "+" : "") + delta);
+  }
   showToast(delta > 0 ? `+${delta} 増やしました` : `${delta} 減らしました`, delta > 0 ? "#1a4fa0" : "#b07800");
   renderList();
   if (currentDetailId === id) refreshDetail();
@@ -175,6 +200,8 @@ function changeStock(id, delta) {
 // ===== 商品削除 =====
 function deleteItem(id) {
   if (!confirm("この商品を削除しますか？")) return;
+  const target = items.find(i => i.id === id);
+  if (target) addHistory("item_delete", target.name, "削除");
   items = items.filter(i => i.id !== id);
   saveItems();
   showToast("商品を削除しました", "#b71c1c");
@@ -274,11 +301,67 @@ function submitModal() {
   if (editingId === null) {
     // 新規追加
     items.push({ id: Date.now(), name, sku, category, stock, priceOriginal, priceSell, priceDiscount, customFields, photo: currentPhoto });
+    addHistory("item_add", name, "新規追加");
     showToast("商品を追加しました");
   } else {
-    // 編集保存
+    // 編集保存：変更前の状態を記録してから更新
     const item = items.find(i => i.id === editingId);
     if (item) {
+      // 変更された項目を検出
+      const changes = [];
+
+      const fieldLabels = {
+        name:          "商品名",
+        sku:           "SKU",
+        category:      "カテゴリ",
+        stock:         "在庫数",
+        priceOriginal: "定価",
+        priceSell:     "販売価格",
+        priceDiscount: "割引価格",
+      };
+
+      // 基本フィールドの差分チェック
+      const newValues = { name, sku, category, stock, priceOriginal, priceSell, priceDiscount };
+      Object.entries(fieldLabels).forEach(([key, label]) => {
+        const oldVal = item[key] ?? "";
+        const newVal = newValues[key] ?? "";
+        if (String(oldVal) !== String(newVal)) {
+          const displayVal = ["priceOriginal","priceSell","priceDiscount"].includes(key) && newVal
+            ? "¥" + Number(newVal).toLocaleString()
+            : newVal || "(削除)";
+          changes.push(`${label}: ${displayVal} に変更`);
+        }
+      });
+
+      // カスタムフィールドの差分チェック
+      const oldCF = (item.customFields || []).reduce((acc, f) => { acc[f.label] = f.value; return acc; }, {});
+      const newCF = customFields.reduce((acc, f) => { acc[f.label] = f.value; return acc; }, {});
+
+      // 新規追加・変更されたフィールド
+      Object.entries(newCF).forEach(([label, value]) => {
+        if (oldCF[label] !== value) {
+          changes.push(`${label}: ${value} に変更`);
+        }
+      });
+
+      // 削除されたフィールド
+      Object.keys(oldCF).forEach(label => {
+        if (!(label in newCF)) {
+          changes.push(`${label}: (削除)`);
+        }
+      });
+
+      // 写真の変更
+      if ((item.photo || null) !== (currentPhoto || null)) {
+        changes.push(currentPhoto ? "写真: 更新" : "写真: 削除");
+      }
+
+      // 変更があれば履歴に記録
+      if (changes.length > 0) {
+        addHistory("item_edit", name, changes);
+      }
+
+      // 実際に更新
       item.name          = name;
       item.sku           = sku;
       item.category      = category;
@@ -287,7 +370,7 @@ function submitModal() {
       item.priceSell     = priceSell;
       item.priceDiscount = priceDiscount;
       item.customFields  = customFields;
-      item.photo         = currentPhoto; // 写真を更新（nullなら削除）
+      item.photo         = currentPhoto;
     }
     showToast("変更を保存しました");
     setTimeout(() => { openDetail(editingId); }, 100);
@@ -403,7 +486,7 @@ function detailManual(direction) {
   if (currentDetailId === null) return;
   const val = parseInt(document.getElementById("manualInput").value);
   if (!val || val <= 0) { showToast("数量を入力してください", "#b71c1c"); return; }
-  changeStock(currentDetailId, direction * val);
+  changeStock(currentDetailId, direction * val, true); // ← まとめて増減のみ履歴記録
   document.getElementById("manualInput").value = "";
 }
 
@@ -444,12 +527,20 @@ async function openScanner(mode) {
     const devices = await codeReader.listVideoInputDevices();
     if (devices.length === 0) throw new Error("カメラが見つかりません");
 
+    // 外カメラ（背面カメラ）を優先して選択
+    // デバイス名に "back" "rear" "environment" が含まれるものを探す
+    const backCamera = devices.find(d =>
+      /back|rear|environment/i.test(d.label)
+    );
+    const deviceId = backCamera ? backCamera.deviceId : devices[devices.length - 1].deviceId;
+    // ※ backCameraが見つからない場合は最後のデバイス（スマホは通常背面が最後）
+
     let lastCode    = null;
     let matchCount  = 0;
     const CONFIRM   = 5; // 同じ番号が5回連続で読めたら候補として表示
 
     scanControls = await codeReader.decodeFromVideoDevice(
-      devices[0].deviceId,
+      deviceId,
       document.getElementById("scannerVideo"),
       (result, error) => {
         if (!result || scanDone) return;
@@ -622,4 +713,143 @@ function resetPhotoPreview() {
 function removePhoto(event) {
   event.stopPropagation(); // upload-areaのクリックが発火しないように
   resetPhotoPreview();
+}
+
+
+// ============================================
+//   履歴モーダル
+// ============================================
+
+let currentFilter = "all";
+
+// ===== 履歴モーダルを開く =====
+function openHistory() {
+  currentFilter = "all";
+  ["all","today","week","month"].forEach(f => {
+    document.getElementById("filter-" + f).classList.toggle("active", f === "all");
+  });
+  renderHistory();
+  document.getElementById("historyOverlay").classList.add("active");
+}
+
+// ===== フィルターを切り替える =====
+function setFilter(filter) {
+  currentFilter = filter;
+  ["all","today","week","month"].forEach(f => {
+    document.getElementById("filter-" + f).classList.toggle("active", f === filter);
+  });
+  renderHistory();
+}
+
+// ===== フィルターに合った履歴を取得 =====
+function getFilteredHistory() {
+  const now   = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const week  = new Date(today); week.setDate(today.getDate() - 7);
+  const month = new Date(today); month.setMonth(today.getMonth() - 1);
+
+  return inventoryHistory.filter(h => {
+    const d = new Date(h.date);
+    if (currentFilter === "today") return d >= today;
+    if (currentFilter === "week")  return d >= week;
+    if (currentFilter === "month") return d >= month;
+    return true;
+  });
+}
+
+// ===== 履歴を表示 =====
+function renderHistory() {
+  const listEl   = document.getElementById("historyList");
+  const filtered = getFilteredHistory();
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = '<div class="inventoryHistory-empty">履歴がありません</div>';
+    return;
+  }
+
+  // 日付でグループ化
+  const groups = {};
+  filtered.forEach(h => {
+    const day = new Date(h.date).toLocaleDateString("ja-JP", {
+      year: "numeric", month: "long", day: "numeric", weekday: "short"
+    });
+    if (!groups[day]) groups[day] = [];
+    groups[day].push(h);
+  });
+
+  listEl.innerHTML = Object.entries(groups).map(([day, logs]) => `
+    <div class="inventoryHistory-group">
+      <div class="inventoryHistory-date-label">${day}</div>
+      ${logs.map(h => {
+        const time = new Date(h.date).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+        const icon = h.type === "stock_change"
+          ? (h.detail.startsWith("+") ? "🔵" : "🔴")
+          : h.type === "item_add"    ? "🟢"
+          : h.type === "item_edit"   ? "✏️"
+          : "⚫";
+
+        // 編集履歴は変更リストを展開して表示
+        if (h.type === "item_edit" && Array.isArray(h.detail)) {
+          return `
+            <div class="inventoryHistory-row inventoryHistory-row-edit">
+              <span class="inventoryHistory-icon">${icon}</span>
+              <div class="inventoryHistory-info" style="flex:1;">
+                <div class="inventoryHistory-item-name">${h.itemName} を編集</div>
+                <div class="inventoryHistory-time">${time}</div>
+                <div class="inventoryHistory-changes">
+                  ${h.detail.map(d => `<div class="inventoryHistory-change-line">・${d}</div>`).join("")}
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        const detailClass = h.type === "stock_change"
+          ? (h.detail.startsWith("+") ? "inventoryHistory-detail plus" : "inventoryHistory-detail minus")
+          : "inventoryHistory-detail neutral";
+        const detailText = h.type === "stock_change" ? h.detail
+          : h.type === "item_add"    ? "新規追加"
+          : h.type === "item_delete" ? "削除"
+          : h.detail;
+        return `
+          <div class="inventoryHistory-row">
+            <span class="inventoryHistory-icon">${icon}</span>
+            <div class="inventoryHistory-info">
+              <div class="inventoryHistory-item-name">${h.itemName}</div>
+              <div class="inventoryHistory-time">${time}</div>
+            </div>
+            <span class="${detailClass}">${detailText}</span>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `).join("");
+}
+
+// ===== 表示中の履歴を削除 =====
+function deleteHistoryByFilter() {
+  const label = { all: "全履歴", today: "今日の履歴", week: "今週の履歴", month: "今月の履歴" }[currentFilter];
+  if (!confirm(`${label}を削除しますか？`)) return;
+
+  const filtered = getFilteredHistory();
+  const deleteIds = new Set(filtered.map(h => h.id));
+  inventoryHistory = inventoryHistory.filter(h => !deleteIds.has(h.id));
+  saveHistory();
+  renderHistory();
+  showToast(`${label}を削除しました`, "#b71c1c");
+}
+
+// ===== 全履歴を削除 =====
+function deleteAllHistory() {
+  if (!confirm("全ての履歴を削除しますか？この操作は元に戻せません。")) return;
+  inventoryHistory = [];
+  saveHistory();
+  renderHistory();
+  showToast("全履歴を削除しました", "#b71c1c");
+}
+
+// ===== 履歴モーダルを閉じる =====
+function closeHistory(event) {
+  if (event && event.target !== document.getElementById("historyOverlay")) return;
+  document.getElementById("historyOverlay").classList.remove("active");
 }

@@ -14,6 +14,7 @@
       <h1>在庫管理</h1>
     </div>
     <div style="display:flex; gap:10px;">
+      <button class="btn-history" onclick="openHistory()">📋 履歴</button>
       <button class="btn-scan" onclick="openScanner('detail')">📷 スキャン</button>
       <button class="btn-primary" onclick="openModal()">＋ 商品を追加</button>
     </div>
@@ -188,6 +189,36 @@
 
       <hr class="detail-divider" />
       <button class="btn-cancel" style="width:100%;" onclick="closeDetail()">閉じる</button>
+    </div>
+  </div>
+
+  <!-- ========== 履歴モーダル ========== -->
+  <div class="modal-overlay" id="historyOverlay" onclick="closeHistory(event)">
+    <div class="modal history-modal">
+      <div class="history-header">
+        <h2>📋 操作履歴</h2>
+        <div class="history-filter">
+          <button class="filter-btn active" id="filter-all"   onclick="setFilter('all')">全期間</button>
+          <button class="filter-btn"        id="filter-today" onclick="setFilter('today')">今日</button>
+          <button class="filter-btn"        id="filter-week"  onclick="setFilter('week')">今週</button>
+          <button class="filter-btn"        id="filter-month" onclick="setFilter('month')">今月</button>
+        </div>
+      </div>
+
+      <!-- 削除ボタン -->
+      <div class="history-delete-row">
+        <button class="btn-delete-history" onclick="deleteHistoryByFilter()">
+          🗑 表示中の履歴を削除
+        </button>
+        <button class="btn-delete-all-history" onclick="deleteAllHistory()">
+          全削除
+        </button>
+      </div>
+
+      <!-- 履歴リスト -->
+      <div id="historyList" class="history-list"></div>
+
+      <button class="btn-cancel" style="width:100%; margin-top:12px;" onclick="closeHistory()">閉じる</button>
     </div>
   </div>
 

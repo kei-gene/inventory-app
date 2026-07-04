@@ -1014,3 +1014,182 @@ main {
   font-weight: 700;
   letter-spacing: 0.5px;
 }
+
+/* ========== 履歴ボタン ========== */
+.btn-history {
+  background: #f5f6fa;
+  color: #444;
+  border: 1.5px solid #dde1ea;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-history:hover { background: #e8eaf0; }
+
+/* ========== 履歴モーダル ========== */
+.history-modal {
+  width: 480px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.history-header h2 { font-size: 18px; font-weight: 800; }
+
+/* フィルタータブ */
+.history-filter {
+  display: flex;
+  gap: 6px;
+}
+
+.filter-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1.5px solid #dde1ea;
+  background: #f5f6fa;
+  font-size: 12px;
+  font-weight: 700;
+  color: #888;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.filter-btn.active {
+  background: #0f1b35;
+  border-color: #0f1b35;
+  color: #fff;
+}
+
+/* 削除ボタン行 */
+.history-delete-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.btn-delete-history {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1.5px solid #f0a500;
+  background: #fff8e1;
+  color: #b07800;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-delete-history:hover { background: #fdefc0; }
+
+.btn-delete-all-history {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1.5px solid #b71c1c;
+  background: #fdecea;
+  color: #b71c1c;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-delete-all-history:hover { background: #f8d0cd; }
+
+/* 履歴リスト */
+.history-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.history-empty {
+  text-align: center;
+  color: #aaa;
+  font-size: 14px;
+  padding: 32px;
+}
+
+/* 日付グループ */
+.history-group {}
+
+.history-date-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #7b91c4;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #f0f1f5;
+}
+
+/* 履歴1行 */
+.history-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+  border-bottom: 1px solid #f8f9fc;
+}
+
+.history-icon { font-size: 14px; }
+
+.history-info { flex: 1; }
+
+.history-item-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f1b35;
+}
+
+.history-time {
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 2px;
+}
+
+/* 詳細（増減数など） */
+.history-detail {
+  font-size: 15px;
+  font-weight: 800;
+  min-width: 40px;
+  text-align: right;
+}
+
+.history-detail.plus    { color: #1a4fa0; }
+.history-detail.minus   { color: #b71c1c; }
+.history-detail.neutral { color: #555; font-size: 12px; }
+
+/* ========== 編集履歴の変更リスト ========== */
+.history-row-edit {
+  align-items: flex-start;
+}
+
+.history-changes {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.history-change-line {
+  font-size: 12px;
+  color: #555;
+  background: #f5f6fa;
+  border-radius: 5px;
+  padding: 3px 8px;
+}
