@@ -124,7 +124,9 @@ main {
   border-radius: 12px;
   padding: 16px 20px;
   box-shadow: 0 1px 6px rgba(0,0,0,0.07);
-  display: flex;
+  /* gridで各カラム位置を固定 */
+  display: grid;
+  grid-template-columns: 64px 1fr 120px 80px;
   align-items: center;
   gap: 16px;
   border-left: 5px solid #1a7a45;
@@ -133,7 +135,7 @@ main {
 .item-card.low   { border-left-color: #f0a500; }
 .item-card.empty { border-left-color: #b71c1c; }
 
-.item-info { flex: 1; }
+.item-info { min-width: 0; } /* gridの中でテキストが溢れないように */
 
 .item-name {
   font-weight: 700;
@@ -1114,7 +1116,8 @@ main {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+  padding-right: 2px;
 }
 
 .history-empty {
@@ -1128,68 +1131,239 @@ main {
 .history-group {}
 
 .history-date-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
-  color: #7b91c4;
+  color: #fff;
+  background: #0f1b35;
+  border-radius: 8px;
+  padding: 5px 12px;
+  display: inline-block;
+  margin-bottom: 10px;
   letter-spacing: 0.5px;
-  margin-bottom: 6px;
-  padding-bottom: 4px;
+}
+
+.history-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 履歴カード */
+.history-card {
+  background: #fff;
+  border-radius: 10px;
+  border: 1.5px solid #e8eaf0;
+  border-left-width: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  overflow: hidden;
+}
+
+/* カード上部（種別・時刻） */
+.hc-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f8f9fc;
   border-bottom: 1px solid #f0f1f5;
 }
 
-/* 履歴1行 */
-.history-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 4px;
-  border-bottom: 1px solid #f8f9fc;
+.hc-icon { font-size: 16px; }
+
+.hc-type-label {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 800;
+  color: #444;
+  letter-spacing: 0.5px;
 }
 
-.history-icon { font-size: 14px; }
-
-.history-info { flex: 1; }
-
-.history-item-name {
-  font-size: 14px;
+.hc-time {
+  font-size: 11px;
+  color: #aaa;
   font-weight: 600;
+}
+
+/* カード本文 */
+.hc-body {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hc-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.hc-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #aaa;
+  min-width: 42px;
+  padding-top: 3px;
+  letter-spacing: 0.5px;
+}
+
+.hc-value {
+  flex: 1;
+  font-size: 13px;
   color: #0f1b35;
 }
 
-.history-time {
-  font-size: 11px;
-  color: #aaa;
-  margin-top: 2px;
+.hc-value.name {
+  font-weight: 700;
+  font-size: 14px;
 }
 
-/* 詳細（増減数など） */
-.history-detail {
+/* 内容タグ */
+.hc-tag {
+  display: inline-block;
+  padding: 3px 14px;
+  border-radius: 6px;
   font-size: 15px;
-  font-weight: 800;
-  min-width: 40px;
-  text-align: right;
+  font-weight: 900;
+  letter-spacing: 1px;
 }
 
-.history-detail.plus    { color: #1a4fa0; }
-.history-detail.minus   { color: #b71c1c; }
-.history-detail.neutral { color: #555; font-size: 12px; }
+.hc-tag.plus    { background: #e3f0ff; color: #1a4fa0; }
+.hc-tag.minus   { background: #fdecea; color: #b71c1c; }
+.hc-tag.neutral { background: #f5f6fa; color: #555; font-size: 12px; font-weight: 700; }
 
-/* ========== 編集履歴の変更リスト ========== */
-.history-row-edit {
-  align-items: flex-start;
-}
-
-.history-changes {
-  margin-top: 6px;
+/* 編集の変更リスト */
+.hc-change-list {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
-.history-change-line {
+.hc-change-item {
   font-size: 12px;
   color: #555;
-  background: #f5f6fa;
-  border-radius: 5px;
+  background: #f8f9fc;
+  border-left: 3px solid #3a6df0;
   padding: 3px 8px;
+  border-radius: 0 5px 5px 0;
+}
+
+
+/* ========== カード在庫数表示（強調デザイン） ========== */
+.card-stock-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 64px;
+  background: #f0f4ff;
+  border: 2px solid #c5d3f8;
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+
+.card-stock-display.low {
+  background: #fff8e1;
+  border-color: #f0c050;
+}
+
+.card-stock-display.empty {
+  background: #fdecea;
+  border-color: #f0a0a0;
+}
+
+.card-stock-label {
+  font-size: 9px;
+  color: #7b91c4;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.card-stock-display.low   .card-stock-label { color: #b07800; }
+.card-stock-display.empty .card-stock-label { color: #b71c1c; }
+
+/* stock-numのカード内スタイル */
+.card-stock-display .stock-num {
+  font-size: 26px;
+  font-weight: 900;
+  color: #1a4fa0;
+  line-height: 1;
+  min-width: unset;
+}
+
+.card-stock-display .stock-num.empty { color: #b71c1c; }
+.card-stock-display .stock-num.low   { color: #b07800; }
+
+.grid-stock-only {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: #f0f4ff;
+  border: 2px solid #c5d3f8;
+  border-radius: 8px;
+  padding: 4px 10px;
+}
+
+.grid-stock-only .card-stock-label { color: #7b91c4; }
+
+/* ========== リスト表示：価格カラム ========== */
+.card-price-col {
+  text-align: right;
+  min-width: 0;
+}
+
+.card-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a4fa0;
+  background: #e3f0ff;
+  border-radius: 5px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.card-price-empty {
+  font-size: 14px;
+  color: #ccc;
+  font-weight: 600;
+}
+
+/* ========== グリッド表示：価格エリア固定 ========== */
+.grid-price-row {
+  min-height: 24px; /* 価格なしでも高さを確保して位置を揃える */
+  display: flex;
+  align-items: center;
+}
+
+.grid-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a4fa0;
+}
+
+.grid-price-empty {
+  font-size: 13px;
+  color: #ddd;
+}
+
+/* グリッドbodyをflex columnにして各要素を固定位置に */
+.grid-body {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+/* grid-footerを常に最下部に固定 */
+.grid-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.grid-footer {
+  margin-top: auto; /* 自動的に最下部へ */
 }

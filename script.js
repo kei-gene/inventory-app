@@ -39,15 +39,42 @@ function saveHistory() {
 }
 
 // 履歴を1件追加
+// stock_changeは2分以内の同じ商品への操作をまとめる
+const MERGE_MINUTES = 1;
+
 function addHistory(type, itemName, detail) {
+  if (type === "stock_change") {
+    const now     = Date.now();
+    const cutoff  = now - MERGE_MINUTES * 60 * 1000;
+    const last    = inventoryHistory[0];
+
+    // 直前の履歴が同じ商品のstock_changeで2分以内なら合算
+    if (
+      last &&
+      last.type     === "stock_change" &&
+      last.itemName === itemName &&
+      new Date(last.date).getTime() > cutoff
+    ) {
+      const prev  = parseInt(last.detail);  // 例: "+3" → 3
+      const added = parseInt(detail);       // 例: "+1" → 1
+      const total = prev + added;
+      last.detail = (total >= 0 ? "+" : "") + total;
+      last.date   = new Date().toISOString(); // 最終操作時刻に更新
+      saveHistory();
+      return;
+    }
+  }
+
+  // まとめられない場合は新規追加
   inventoryHistory.unshift({
     id:       Date.now(),
-    type,       // "stock_change" / "item_add" / "item_delete" / "item_edit"
+    type,
     itemName,
-    detail,     // stock_change: "+1"など / item_edit: 変更配列 / その他: 文字列
+    detail,
     date:     new Date().toISOString(),
   });
-  // 最大1000件で自動トリム（容量対策）
+
+  // 最大1000件で自動トリム
   if (inventoryHistory.length > 1000) inventoryHistory = inventoryHistory.slice(0, 1000);
   saveHistory();
 }
@@ -109,8 +136,12 @@ function renderList() {
       let badge = '<span class="badge green">在庫あり</span>';
       if (item.stock === 0)       { cardClass = "empty"; badge = '<span class="badge red">在庫切れ</span>'; }
       else if (item.stock <= LOW) { cardClass = "low";   badge = '<span class="badge yellow">残りわずか</span>'; }
-      const numClass = item.stock === 0 ? "stock-num empty" : "stock-num";
-      const priceDisplay = item.priceSell ? `<div class="card-price">${yen(item.priceSell)}</div>` : "";
+      const stockBoxClass = item.stock === 0 ? "card-stock-display empty"
+        : item.stock <= LOW ? "card-stock-display low"
+        : "card-stock-display";
+      const numClass = item.stock === 0 ? "stock-num empty"
+        : item.stock <= LOW ? "stock-num low"
+        : "stock-num";
       const listPhoto = item.photo
         ? `<img src="${item.photo}" class="list-card-photo" alt="${item.name}" />`
         : `<div class="list-card-photo list-card-nophoto">NO<br>IMAGE</div>`;
@@ -123,16 +154,15 @@ function renderList() {
               ${item.sku ? "SKU: " + item.sku : ""}
               ${item.category ? "　" + item.category : ""}
             </div>
-            <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
-              ${badge}${priceDisplay}
-            </div>
+            ${badge}
           </div>
-          <div class="stock-control">
-            <button class="btn-minus" onclick="event.stopPropagation(); changeStock(${item.id}, -1)">−</button>
+          <div class="card-price-col">
+            ${item.priceSell ? `<span class="card-price">${yen(item.priceSell)}</span>` : `<span class="card-price-empty">-</span>`}
+          </div>
+          <div class="${stockBoxClass}">
+            <span class="card-stock-label">在庫</span>
             <span class="${numClass}">${item.stock}</span>
-            <button class="btn-plus"  onclick="event.stopPropagation(); changeStock(${item.id}, +1)">＋</button>
           </div>
-          <button class="btn-delete" onclick="event.stopPropagation(); deleteItem(${item.id})" title="削除">✕</button>
         </div>`;
     }).join("");
 
@@ -144,7 +174,10 @@ function renderList() {
       let badge = '<span class="badge green">在庫あり</span>';
       if (item.stock === 0)       { cardClass = "empty"; badge = '<span class="badge red">在庫切れ</span>'; }
       else if (item.stock <= LOW) { cardClass = "low";   badge = '<span class="badge yellow">残りわずか</span>'; }
-      const numClass = item.stock === 0 ? "stock-num empty" : "stock-num";
+      const stockBoxClass = item.stock === 0 ? "card-stock-display empty"
+        : item.stock <= LOW ? "card-stock-display low"
+        : "card-stock-display";
+      const numClass = item.stock === 0 ? "stock-num empty" : item.stock <= LOW ? "stock-num low" : "stock-num";
       const photoHtml = item.photo
         ? `<img src="${item.photo}" class="grid-photo" alt="${item.name}" />`
         : `<div class="grid-photo-placeholder">NO IMAGE</div>`;
@@ -153,14 +186,15 @@ function renderList() {
           ${photoHtml}
           <div class="grid-body">
             <div class="grid-name">${item.name}</div>
-            <div class="grid-meta">${item.category || ""}</div>
-            ${item.priceSell ? `<div class="grid-price">${yen(item.priceSell)}</div>` : ""}
+            <div class="grid-meta">${item.category || "　"}</div>
+            <div class="grid-price-row">
+              ${item.priceSell ? `<span class="grid-price">${yen(item.priceSell)}</span>` : `<span class="grid-price-empty">-</span>`}
+            </div>
             <div class="grid-footer">
               ${badge}
-              <div class="grid-stock-control">
-                <button class="btn-minus" onclick="event.stopPropagation(); changeStock(${item.id}, -1)">−</button>
-                <span class="${numClass}" style="font-size:16px;">${item.stock}</span>
-                <button class="btn-plus"  onclick="event.stopPropagation(); changeStock(${item.id}, +1)">＋</button>
+              <div class="${stockBoxClass}" style="padding:4px 8px;">
+                <span class="card-stock-label">在庫</span>
+                <span class="${numClass}" style="font-size:15px;">${item.stock}</span>
               </div>
             </div>
           </div>
@@ -321,15 +355,21 @@ function submitModal() {
       };
 
       // 基本フィールドの差分チェック
+      const priceFields = ["priceOriginal", "priceSell", "priceDiscount"];
       const newValues = { name, sku, category, stock, priceOriginal, priceSell, priceDiscount };
       Object.entries(fieldLabels).forEach(([key, label]) => {
         const oldVal = item[key] ?? "";
         const newVal = newValues[key] ?? "";
         if (String(oldVal) !== String(newVal)) {
-          const displayVal = ["priceOriginal","priceSell","priceDiscount"].includes(key) && newVal
-            ? "¥" + Number(newVal).toLocaleString()
-            : newVal || "(削除)";
-          changes.push(`${label}: ${displayVal} に変更`);
+          if (priceFields.includes(key)) {
+            // 価格のみ変更前後を表示
+            const oldDisplay = oldVal ? "¥" + Number(oldVal).toLocaleString() : "(未設定)";
+            const newDisplay = newVal ? "¥" + Number(newVal).toLocaleString() : "(削除)";
+            changes.push(`${label}: ${oldDisplay} → ${newDisplay}`);
+          } else {
+            const displayVal = newVal || "(削除)";
+            changes.push(`${label}: ${displayVal} に変更`);
+          }
         }
       });
 
@@ -479,7 +519,7 @@ function refreshDetail() {
 
 function detailChange(delta) {
   if (currentDetailId === null) return;
-  changeStock(currentDetailId, delta);
+  changeStock(currentDetailId, delta, true); // 詳細モーダルの操作は全て記録
 }
 
 function detailManual(direction) {
@@ -637,9 +677,20 @@ function stopScanner() {
 
 function closeScanner() {
   stopScanner();
+
+  // codeReaderをリセット
   if (codeReader) { codeReader.reset(); codeReader = null; }
+
+  // videoタグのストリームを完全に停止（これをしないと次回内カメになる）
+  const video = document.getElementById("scannerVideo");
+  if (video && video.srcObject) {
+    video.srcObject.getTracks().forEach(track => track.stop());
+    video.srcObject = null;
+  }
+
   document.getElementById("scannerOverlay").classList.remove("active");
   document.getElementById("scanResult").innerHTML = "";
+  delete document.getElementById("scanResult").dataset.candidate;
   scanDone = false;
 }
 
@@ -763,7 +814,7 @@ function renderHistory() {
   const filtered = getFilteredHistory();
 
   if (filtered.length === 0) {
-    listEl.innerHTML = '<div class="inventoryHistory-empty">履歴がありません</div>';
+    listEl.innerHTML = '<div class="history-empty">履歴がありません</div>';
     return;
   }
 
@@ -778,50 +829,57 @@ function renderHistory() {
   });
 
   listEl.innerHTML = Object.entries(groups).map(([day, logs]) => `
-    <div class="inventoryHistory-group">
-      <div class="inventoryHistory-date-label">${day}</div>
-      ${logs.map(h => {
-        const time = new Date(h.date).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
-        const icon = h.type === "stock_change"
-          ? (h.detail.startsWith("+") ? "🔵" : "🔴")
-          : h.type === "item_add"    ? "🟢"
-          : h.type === "item_edit"   ? "✏️"
-          : "⚫";
+    <div class="history-group">
+      <div class="history-date-label">📅 ${day}</div>
+      <div class="history-cards">
+        ${logs.map(h => {
+          const time = new Date(h.date).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
 
-        // 編集履歴は変更リストを展開して表示
-        if (h.type === "item_edit" && Array.isArray(h.detail)) {
+          const isPlus = h.detail && !Array.isArray(h.detail) && h.detail.startsWith("+");
+          const typeInfo = {
+            stock_change: { icon: isPlus ? "📈" : "📉", label: "在庫変動",  borderColor: isPlus ? "#3a6df0" : "#b71c1c" },
+            item_add:     { icon: "✅",                  label: "商品追加",  borderColor: "#1a7a45" },
+            item_delete:  { icon: "🗑️",                 label: "商品削除",  borderColor: "#b71c1c" },
+            item_edit:    { icon: "✏️",                  label: "商品編集",  borderColor: "#b07800" },
+          }[h.type] || { icon: "📝", label: "操作", borderColor: "#aaa" };
+
+          // 内容テキスト
+          let contentHtml = "";
+          if (h.type === "stock_change") {
+            const isP = h.detail && h.detail.startsWith("+");
+            contentHtml = `<span class="hc-tag ${isP ? "plus" : "minus"}">${h.detail}</span>`;
+          } else if (h.type === "item_edit" && Array.isArray(h.detail)) {
+            contentHtml = `<div class="hc-change-list">${h.detail.map(d =>
+              `<div class="hc-change-item">・${d}</div>`
+            ).join("")}</div>`;
+          } else {
+            contentHtml = `<span class="hc-tag neutral">${
+              h.type === "item_add" ? "新規登録" :
+              h.type === "item_delete" ? "削除" : h.detail
+            }</span>`;
+          }
+
           return `
-            <div class="inventoryHistory-row inventoryHistory-row-edit">
-              <span class="inventoryHistory-icon">${icon}</span>
-              <div class="inventoryHistory-info" style="flex:1;">
-                <div class="inventoryHistory-item-name">${h.itemName} を編集</div>
-                <div class="inventoryHistory-time">${time}</div>
-                <div class="inventoryHistory-changes">
-                  ${h.detail.map(d => `<div class="inventoryHistory-change-line">・${d}</div>`).join("")}
+            <div class="history-card" style="border-left: 4px solid ${typeInfo.borderColor};">
+              <div class="hc-top">
+                <span class="hc-icon">${typeInfo.icon}</span>
+                <span class="hc-type-label">${typeInfo.label}</span>
+                <span class="hc-time">🕐 ${time}</span>
+              </div>
+              <div class="hc-body">
+                <div class="hc-row">
+                  <span class="hc-label">商品名</span>
+                  <span class="hc-value name">${h.itemName}</span>
+                </div>
+                <div class="hc-row">
+                  <span class="hc-label">内　容</span>
+                  <div class="hc-value">${contentHtml}</div>
                 </div>
               </div>
             </div>
           `;
-        }
-
-        const detailClass = h.type === "stock_change"
-          ? (h.detail.startsWith("+") ? "inventoryHistory-detail plus" : "inventoryHistory-detail minus")
-          : "inventoryHistory-detail neutral";
-        const detailText = h.type === "stock_change" ? h.detail
-          : h.type === "item_add"    ? "新規追加"
-          : h.type === "item_delete" ? "削除"
-          : h.detail;
-        return `
-          <div class="inventoryHistory-row">
-            <span class="inventoryHistory-icon">${icon}</span>
-            <div class="inventoryHistory-info">
-              <div class="inventoryHistory-item-name">${h.itemName}</div>
-              <div class="inventoryHistory-time">${time}</div>
-            </div>
-            <span class="${detailClass}">${detailText}</span>
-          </div>
-        `;
-      }).join("")}
+        }).join("")}
+      </div>
     </div>
   `).join("");
 }
