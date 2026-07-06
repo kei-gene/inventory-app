@@ -220,9 +220,12 @@ main {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.4);
-  align-items: center;
+  align-items: flex-start;       /* 上揃えにしてスクロール可能に */
   justify-content: center;
   z-index: 100;
+  overflow-y: auto;              /* オーバーレイ自体をスクロール */
+  padding: 24px 16px;            /* 上下に余白 */
+  box-sizing: border-box;
 }
 
 .modal-overlay.active {
@@ -235,6 +238,8 @@ main {
   padding: 28px;
   width: 340px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  max-height: none;              /* 高さ制限を解除 */
+  margin: auto;                  /* 縦中央寄せ（コンテンツが短いとき） */
 }
 
 .modal h2 {
@@ -582,8 +587,7 @@ main {
 /* ========== フォームモーダル（追加・編集） ========== */
 .form-modal {
   width: 460px;
-  max-height: 90vh;
-  overflow-y: auto;
+  /* max-heightを解除してオーバーレイ側でスクロール */
 }
 
 .form-section-label {
@@ -1034,9 +1038,9 @@ main {
 /* ========== 履歴モーダル ========== */
 .history-modal {
   width: 480px;
-  max-height: 85vh;
   display: flex;
   flex-direction: column;
+  /* max-heightを解除してオーバーレイ側でスクロール */
 }
 
 .history-header {
@@ -1113,7 +1117,6 @@ main {
 /* 履歴リスト */
 .history-list {
   flex: 1;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -1366,4 +1369,21 @@ main {
 
 .grid-footer {
   margin-top: auto; /* 自動的に最下部へ */
+}
+
+/* ========== スマホ対応：モーダル横幅を画面に合わせる ========== */
+@media (max-width: 520px) {
+  .modal,
+  .form-modal,
+  .detail-modal,
+  .scanner-modal,
+  .history-modal {
+    width: 100% !important;
+    border-radius: 12px;
+  }
+
+  .modal-overlay {
+    padding: 12px 8px;
+    align-items: flex-start;
+  }
 }

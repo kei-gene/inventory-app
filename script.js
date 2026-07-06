@@ -564,40 +564,53 @@ async function openScanner(mode) {
     hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
 
     codeReader = new ZXing.BrowserMultiFormatReader(hints);
-    const devices = await codeReader.listVideoInputDevices();
-    if (devices.length === 0) throw new Error("カメラが見つかりません");
-
-    // 外カメラ（背面カメラ）を優先して選択
-    // デバイス名に "back" "rear" "environment" が含まれるものを探す
-    const backCamera = devices.find(d =>
-      /back|rear|environment/i.test(d.label)
-    );
-    const deviceId = backCamera ? backCamera.deviceId : devices[devices.length - 1].deviceId;
-    // ※ backCameraが見つからない場合は最後のデバイス（スマホは通常背面が最後）
 
     let lastCode    = null;
     let matchCount  = 0;
-    const CONFIRM   = 5; // 同じ番号が5回連続で読めたら候補として表示
+    const CONFIRM   = 5;
 
-    scanControls = await codeReader.decodeFromVideoDevice(
-      deviceId,
-      document.getElementById("scannerVideo"),
-      (result, error) => {
-        if (!result || scanDone) return;
-        const code = result.getText();
+    // facingMode: "environment" で外カメを強制指定
+    // iOSでもAndroidでもラベル名に関係なく背面カメラが起動する
+    const videoConstraints = {
+      facingMode: { exact: "environment" }
+    };
 
-        if (code === lastCode) {
-          matchCount++;
-          if (matchCount >= CONFIRM && !scanDone) {
-            // 候補として表示し、ユーザーに確認させる
-            showScanCandidate(code);
+    try {
+      scanControls = await codeReader.decodeFromConstraints(
+        { video: videoConstraints },
+        document.getElementById("scannerVideo"),
+        (result, error) => {
+          if (!result || scanDone) return;
+          const code = result.getText();
+          if (code === lastCode) {
+            matchCount++;
+            if (matchCount >= CONFIRM && !scanDone) showScanCandidate(code);
+          } else {
+            lastCode = code; matchCount = 1;
           }
-        } else {
-          lastCode   = code;
-          matchCount = 1;
         }
-      }
-    );
+      );
+    } catch (e) {
+      // exact指定が失敗した場合（PCなど）はidealにフォールバック
+      const devices = await codeReader.listVideoInputDevices();
+      if (devices.length === 0) throw new Error("カメラが見つかりません");
+      const backCamera = devices.find(d => /back|rear|environment/i.test(d.label));
+      const deviceId = backCamera ? backCamera.deviceId : devices[devices.length - 1].deviceId;
+      scanControls = await codeReader.decodeFromVideoDevice(
+        deviceId,
+        document.getElementById("scannerVideo"),
+        (result, error) => {
+          if (!result || scanDone) return;
+          const code = result.getText();
+          if (code === lastCode) {
+            matchCount++;
+            if (matchCount >= CONFIRM && !scanDone) showScanCandidate(code);
+          } else {
+            lastCode = code; matchCount = 1;
+          }
+        }
+      );
+    }
   } catch (err) {
     resultEl.textContent = "⚠️ カメラを起動できませんでした: " + err.message;
     resultEl.style.color = "#b71c1c";
