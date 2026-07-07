@@ -82,7 +82,10 @@ function addHistory(type, itemName, detail) {
 const LOW = 3;
 
 // ===== 表示モード =====
-let currentView = localStorage.getItem("viewMode") || "list"; // list / grid2 / grid3
+let currentView   = localStorage.getItem("viewMode") || "list";
+let currentSort   = "default";
+let currentFilter = "all";
+let currentPrice  = "all";
 
 function setView(mode) {
   currentView = mode;
@@ -95,6 +98,109 @@ function setView(mode) {
 
   renderList();
 }
+
+// ============================================
+//   並び替え・フィルター
+// ============================================
+
+const SORT_LABELS = {
+  default:    "登録順",
+  name_asc:   "商品名順",
+  stock_desc: "在庫多い順",
+  stock_asc:  "在庫少ない順",
+  price_desc: "価格高い順",
+  price_asc:  "価格安い順",
+  date_desc:  "新しい順",
+  date_asc:   "古い順",
+};
+
+const FILTER_LABELS = {
+  all:           "すべて",
+  in_stock:      "在庫あり",
+  low_stock:     "残りわずか",
+  out_of_stock:  "在庫切れ",
+};
+
+const PRICE_LABELS = {
+  all:         "すべて",
+  under_1000:  "〜¥1,000",
+  "1000_5000": "¥1,000〜¥5,000",
+  over_5000:   "¥5,000〜",
+};
+
+function setSort(sort) {
+  currentSort = sort;
+  document.getElementById("sortLabel").textContent = SORT_LABELS[sort] || sort;
+  closeAllDropdowns();
+  updateActiveTags();
+  renderList();
+}
+
+function setFilter(filter) {
+  currentFilter = filter;
+  const label = FILTER_LABELS[filter] || filter.replace("cat:", "");
+  document.getElementById("filterLabel").textContent = label === "すべて" && currentPrice === "all" ? "すべて" : label;
+  closeAllDropdowns();
+  updateActiveTags();
+  renderList();
+}
+
+function setPriceFilter(price) {
+  currentPrice = price;
+  closeAllDropdowns();
+  updateActiveTags();
+  renderList();
+}
+
+// カテゴリフィルターメニューを動的生成
+function updateCategoryFilter() {
+  const cats = [...new Set(items.map(i => i.category).filter(Boolean))];
+  const container = document.getElementById("categoryFilterItems");
+  if (!container) return;
+  container.innerHTML = cats.map(cat =>
+    `<div class="dropdown-item" onclick="setFilter('cat:${cat}')">${cat}</div>`
+  ).join("");
+}
+
+// アクティブフィルタータグを更新
+function updateActiveTags() {
+  const tags = [];
+  if (currentSort !== "default") tags.push({ label: SORT_LABELS[currentSort], clear: () => setSort("default") });
+  if (currentFilter !== "all")   tags.push({ label: FILTER_LABELS[currentFilter] || currentFilter.replace("cat:", ""), clear: () => setFilter("all") });
+  if (currentPrice !== "all")    tags.push({ label: PRICE_LABELS[currentPrice], clear: () => setPriceFilter("all") });
+
+  const el = document.getElementById("activeTags");
+  if (!el) return;
+  el.innerHTML = tags.map((t, i) => `
+    <span class="active-tag" onclick="clearTag(${i})">
+      ${t.label} ✕
+    </span>
+  `).join("");
+  // clearTag用にタグ情報を保存
+  el._tags = tags;
+}
+
+function clearTag(i) {
+  const el = document.getElementById("activeTags");
+  if (el && el._tags && el._tags[i]) el._tags[i].clear();
+}
+
+// ドロップダウンの開閉
+function toggleDropdown(id) {
+  const menu = document.getElementById(id);
+  const isOpen = menu.classList.contains("open");
+  closeAllDropdowns();
+  if (!isOpen) menu.classList.add("open");
+}
+
+function closeAllDropdowns() {
+  document.querySelectorAll(".dropdown-menu").forEach(m => m.classList.remove("open"));
+}
+
+// 外クリックで閉じる
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".dropdown-wrap")) closeAllDropdowns();
+});
 
 // ページ読み込み時にタブの初期状態を即時反映
 function initViewTabs() {
@@ -115,11 +221,45 @@ function renderList() {
   const search = document.getElementById("searchInput").value;
   const listEl = document.getElementById("itemList");
 
-  const filtered = items.filter(item =>
+  // 検索フィルター
+  let filtered = items.filter(item =>
     item.name.includes(search) ||
     (item.sku || "").includes(search) ||
     (item.category || "").includes(search)
   );
+
+  // 在庫状況フィルター
+  if (currentFilter === "in_stock")      filtered = filtered.filter(i => i.stock > LOW);
+  else if (currentFilter === "low_stock")     filtered = filtered.filter(i => i.stock > 0 && i.stock <= LOW);
+  else if (currentFilter === "out_of_stock")  filtered = filtered.filter(i => i.stock === 0);
+
+  // カテゴリフィルター
+  if (currentFilter.startsWith("cat:")) {
+    const cat = currentFilter.slice(4);
+    filtered = filtered.filter(i => (i.category || "") === cat);
+  }
+
+  // 価格帯フィルター
+  if (currentPrice === "under_1000")  filtered = filtered.filter(i => i.priceSell && i.priceSell < 1000);
+  else if (currentPrice === "1000_5000") filtered = filtered.filter(i => i.priceSell && i.priceSell >= 1000 && i.priceSell <= 5000);
+  else if (currentPrice === "over_5000") filtered = filtered.filter(i => i.priceSell && i.priceSell > 5000);
+
+  // 並び替え
+  filtered = [...filtered].sort((a, b) => {
+    switch (currentSort) {
+      case "name_asc":   return a.name.localeCompare(b.name, "ja");
+      case "stock_desc": return b.stock - a.stock;
+      case "stock_asc":  return a.stock - b.stock;
+      case "price_desc": return (b.priceSell || 0) - (a.priceSell || 0);
+      case "price_asc":  return (a.priceSell || 0) - (b.priceSell || 0);
+      case "date_desc":  return b.id - a.id;
+      case "date_asc":   return a.id - b.id;
+      default:           return 0;
+    }
+  });
+
+  // カテゴリフィルターメニューを動的生成
+  updateCategoryFilter();
 
   if (filtered.length === 0) {
     listEl.innerHTML = '<div class="empty-msg">商品が見つかりません</div>';
@@ -847,6 +987,7 @@ function renderHistory() {
       <div class="history-cards">
         ${logs.map(h => {
           const time = new Date(h.date).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+          const date = new Date(h.date).toLocaleDateString("ja-JP", { month: "2-digit", day: "2-digit" });
 
           const isPlus = h.detail && !Array.isArray(h.detail) && h.detail.startsWith("+");
           const typeInfo = {
@@ -877,7 +1018,7 @@ function renderHistory() {
               <div class="hc-top">
                 <span class="hc-icon">${typeInfo.icon}</span>
                 <span class="hc-type-label">${typeInfo.label}</span>
-                <span class="hc-time">🕐 ${time}</span>
+                <span class="hc-time">🕐 ${date} ${time}</span>
               </div>
               <div class="hc-body">
                 <div class="hc-row">

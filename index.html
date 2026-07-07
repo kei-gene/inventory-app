@@ -38,6 +38,48 @@
 
     <input type="text" id="searchInput" placeholder="商品名・SKU・カテゴリで検索..." oninput="renderList()" />
 
+    <!-- 並び替え・フィルター -->
+    <div class="sort-filter-bar">
+      <div class="dropdown-wrap">
+        <button class="dropdown-btn" id="sortBtn" onclick="toggleDropdown('sortMenu')">
+          並び替え <span id="sortLabel">登録順</span> ▾
+        </button>
+        <div class="dropdown-menu" id="sortMenu">
+          <div class="dropdown-item" onclick="setSort('default')">登録順</div>
+          <div class="dropdown-item" onclick="setSort('name_asc')">商品名 A→Z</div>
+          <div class="dropdown-item" onclick="setSort('stock_desc')">在庫数 多い順</div>
+          <div class="dropdown-item" onclick="setSort('stock_asc')">在庫数 少ない順</div>
+          <div class="dropdown-item" onclick="setSort('price_desc')">価格 高い順</div>
+          <div class="dropdown-item" onclick="setSort('price_asc')">価格 安い順</div>
+          <div class="dropdown-item" onclick="setSort('date_desc')">登録日 新しい順</div>
+          <div class="dropdown-item" onclick="setSort('date_asc')">登録日 古い順</div>
+        </div>
+      </div>
+
+      <div class="dropdown-wrap">
+        <button class="dropdown-btn" id="filterBtn" onclick="toggleDropdown('filterMenu')">
+          フィルター <span id="filterLabel">すべて</span> ▾
+        </button>
+        <div class="dropdown-menu" id="filterMenu">
+          <div class="dropdown-section-label">在庫状況</div>
+          <div class="dropdown-item" onclick="setFilter('all')">すべて</div>
+          <div class="dropdown-item" onclick="setFilter('in_stock')">在庫あり</div>
+          <div class="dropdown-item" onclick="setFilter('low_stock')">残りわずか</div>
+          <div class="dropdown-item" onclick="setFilter('out_of_stock')">在庫切れ</div>
+          <div class="dropdown-section-label" id="categoryFilterLabel">カテゴリ</div>
+          <div id="categoryFilterItems"></div>
+          <div class="dropdown-section-label">価格帯</div>
+          <div class="dropdown-item" onclick="setPriceFilter('all')">すべて</div>
+          <div class="dropdown-item" onclick="setPriceFilter('under_1000')">〜¥1,000</div>
+          <div class="dropdown-item" onclick="setPriceFilter('1000_5000')">¥1,000〜¥5,000</div>
+          <div class="dropdown-item" onclick="setPriceFilter('over_5000')">¥5,000〜</div>
+        </div>
+      </div>
+
+      <!-- アクティブフィルタータグ -->
+      <div id="activeTags" class="active-tags"></div>
+    </div>
+
     <!-- 表示切り替えタブ -->
     <div class="view-tabs">
       <button class="view-tab active" id="tab-list"   onclick="setView('list')">  ☰ リスト</button>
