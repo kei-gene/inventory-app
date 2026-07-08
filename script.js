@@ -924,11 +924,11 @@ function removePhoto(event) {
 //   履歴モーダル
 // ============================================
 
-let currentFilter = "all";
+let historyFilter = "all";
 
 // ===== 履歴モーダルを開く =====
 function openHistory() {
-  currentFilter = "all";
+  historyFilter = "all";
   ["all","today","week","month"].forEach(f => {
     document.getElementById("filter-" + f).classList.toggle("active", f === "all");
   });
@@ -936,9 +936,9 @@ function openHistory() {
   document.getElementById("historyOverlay").classList.add("active");
 }
 
-// ===== フィルターを切り替える =====
-function setFilter(filter) {
-  currentFilter = filter;
+// ===== 履歴フィルターを切り替える =====
+function setHistoryFilter(filter) {
+  historyFilter = filter;
   ["all","today","week","month"].forEach(f => {
     document.getElementById("filter-" + f).classList.toggle("active", f === filter);
   });
@@ -954,9 +954,9 @@ function getFilteredHistory() {
 
   return inventoryHistory.filter(h => {
     const d = new Date(h.date);
-    if (currentFilter === "today") return d >= today;
-    if (currentFilter === "week")  return d >= week;
-    if (currentFilter === "month") return d >= month;
+    if (historyFilter === "today") return d >= today;
+    if (historyFilter === "week")  return d >= week;
+    if (historyFilter === "month") return d >= month;
     return true;
   });
 }
@@ -1040,7 +1040,7 @@ function renderHistory() {
 
 // ===== 表示中の履歴を削除 =====
 function deleteHistoryByFilter() {
-  const label = { all: "全履歴", today: "今日の履歴", week: "今週の履歴", month: "今月の履歴" }[currentFilter];
+  const label = { all: "全履歴", today: "今日の履歴", week: "今週の履歴", month: "今月の履歴" }[historyFilter];
   if (!confirm(`${label}を削除しますか？`)) return;
 
   const filtered = getFilteredHistory();
