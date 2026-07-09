@@ -139,10 +139,8 @@ function setSort(sort) {
 
 function setFilter(filter) {
   if (filter === "all") {
-    // 「すべて」を選んだらリセット
     currentFilters = [];
   } else {
-    // すでに選択中なら解除、そうでなければ追加
     const idx = currentFilters.indexOf(filter);
     if (idx >= 0) {
       currentFilters.splice(idx, 1);
@@ -151,13 +149,13 @@ function setFilter(filter) {
     }
   }
 
-  // ボタンラベルを更新
   const label = currentFilters.length === 0 ? "すべて"
     : currentFilters.length === 1
       ? (FILTER_LABELS[currentFilters[0]] || currentFilters[0].replace("cat:", ""))
       : `${currentFilters.length}件選択中`;
   document.getElementById("filterLabel").textContent = label;
 
+  // メニューは閉じずに複数選択できるようにする
   updateActiveTags();
   updateDropdownHighlight();
   renderList();
@@ -176,11 +174,12 @@ function updateCategoryFilter() {
   const cats = [...new Set(items.map(i => i.category).filter(Boolean))];
   const container = document.getElementById("categoryFilterItems");
   if (!container) return;
-  container.innerHTML = cats.map(cat =>
-    `<div class="dropdown-item ${currentFilter === 'cat:' + cat ? 'selected' : ''}" onclick="setFilter('cat:${cat}')">
-      <span class="dropdown-check">${currentFilter === 'cat:' + cat ? '✓' : ''}</span>${cat}
-    </div>`
-  ).join("");
+  container.innerHTML = cats.map(cat => {
+    const isSelected = currentFilters.includes("cat:" + cat);
+    return `<div class="dropdown-item ${isSelected ? 'selected' : ''}" onclick="setFilter('cat:${cat}')">
+      <span class="dropdown-check">${isSelected ? '✓' : ''}</span>${cat}
+    </div>`;
+  }).join("");
 }
 
 // ドロップダウンの選択中アイテムをハイライト
