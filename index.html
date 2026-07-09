@@ -45,14 +45,14 @@
           並び替え <span id="sortLabel">登録順</span> ▾
         </button>
         <div class="dropdown-menu" id="sortMenu">
-          <div class="dropdown-item" onclick="setSort('default')">登録順</div>
-          <div class="dropdown-item" onclick="setSort('name_asc')">商品名 A→Z</div>
-          <div class="dropdown-item" onclick="setSort('stock_desc')">在庫数 多い順</div>
-          <div class="dropdown-item" onclick="setSort('stock_asc')">在庫数 少ない順</div>
-          <div class="dropdown-item" onclick="setSort('price_desc')">価格 高い順</div>
-          <div class="dropdown-item" onclick="setSort('price_asc')">価格 安い順</div>
-          <div class="dropdown-item" onclick="setSort('date_desc')">登録日 新しい順</div>
-          <div class="dropdown-item" onclick="setSort('date_asc')">登録日 古い順</div>
+          <div class="dropdown-item selected" onclick="setSort('default')"><span class="dropdown-check">✓</span>登録順</div>
+          <div class="dropdown-item" onclick="setSort('name_asc')"><span class="dropdown-check"></span>商品名 A→Z</div>
+          <div class="dropdown-item" onclick="setSort('stock_desc')"><span class="dropdown-check"></span>在庫数 多い順</div>
+          <div class="dropdown-item" onclick="setSort('stock_asc')"><span class="dropdown-check"></span>在庫数 少ない順</div>
+          <div class="dropdown-item" onclick="setSort('price_desc')"><span class="dropdown-check"></span>価格 高い順</div>
+          <div class="dropdown-item" onclick="setSort('price_asc')"><span class="dropdown-check"></span>価格 安い順</div>
+          <div class="dropdown-item" onclick="setSort('date_desc')"><span class="dropdown-check"></span>登録日 新しい順</div>
+          <div class="dropdown-item" onclick="setSort('date_asc')"><span class="dropdown-check"></span>登録日 古い順</div>
         </div>
       </div>
 
@@ -62,17 +62,17 @@
         </button>
         <div class="dropdown-menu" id="filterMenu">
           <div class="dropdown-section-label">在庫状況</div>
-          <div class="dropdown-item" onclick="setFilter('all')">すべて</div>
-          <div class="dropdown-item" onclick="setFilter('in_stock')">在庫あり</div>
-          <div class="dropdown-item" onclick="setFilter('low_stock')">残りわずか</div>
-          <div class="dropdown-item" onclick="setFilter('out_of_stock')">在庫切れ</div>
+          <div class="dropdown-item selected" onclick="setFilter('all')"><span class="dropdown-check">✓</span>すべて</div>
+          <div class="dropdown-item" onclick="setFilter('in_stock')"><span class="dropdown-check"></span>在庫あり</div>
+          <div class="dropdown-item" onclick="setFilter('low_stock')"><span class="dropdown-check"></span>残りわずか</div>
+          <div class="dropdown-item" onclick="setFilter('out_of_stock')"><span class="dropdown-check"></span>在庫切れ</div>
           <div class="dropdown-section-label" id="categoryFilterLabel">カテゴリ</div>
           <div id="categoryFilterItems"></div>
           <div class="dropdown-section-label">価格帯</div>
-          <div class="dropdown-item" onclick="setPriceFilter('all')">すべて</div>
-          <div class="dropdown-item" onclick="setPriceFilter('under_1000')">〜¥1,000</div>
-          <div class="dropdown-item" onclick="setPriceFilter('1000_5000')">¥1,000〜¥5,000</div>
-          <div class="dropdown-item" onclick="setPriceFilter('over_5000')">¥5,000〜</div>
+          <div class="dropdown-item selected" onclick="setPriceFilter('all')"><span class="dropdown-check">✓</span>すべて</div>
+          <div class="dropdown-item" onclick="setPriceFilter('under_1000')"><span class="dropdown-check"></span>〜¥1,000</div>
+          <div class="dropdown-item" onclick="setPriceFilter('1000_5000')"><span class="dropdown-check"></span>¥1,000〜¥5,000</div>
+          <div class="dropdown-item" onclick="setPriceFilter('over_5000')"><span class="dropdown-check"></span>¥5,000〜</div>
         </div>
       </div>
 

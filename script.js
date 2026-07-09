@@ -82,10 +82,10 @@ function addHistory(type, itemName, detail) {
 const LOW = 3;
 
 // ===== 表示モード =====
-let currentView   = localStorage.getItem("viewMode") || "list";
-let currentSort   = "default";
-let currentFilter = "all";
-let currentPrice  = "all";
+let currentView    = localStorage.getItem("viewMode") || "list";
+let currentSort    = "default";
+let currentFilters = []; // 複数選択対応（空=すべて）
+let currentPrice   = "all";
 
 function setView(mode) {
   currentView = mode;
@@ -133,15 +133,33 @@ function setSort(sort) {
   document.getElementById("sortLabel").textContent = SORT_LABELS[sort] || sort;
   closeAllDropdowns();
   updateActiveTags();
+  updateDropdownHighlight();
   renderList();
 }
 
 function setFilter(filter) {
-  currentFilter = filter;
-  const label = FILTER_LABELS[filter] || filter.replace("cat:", "");
-  document.getElementById("filterLabel").textContent = label === "すべて" && currentPrice === "all" ? "すべて" : label;
-  closeAllDropdowns();
+  if (filter === "all") {
+    // 「すべて」を選んだらリセット
+    currentFilters = [];
+  } else {
+    // すでに選択中なら解除、そうでなければ追加
+    const idx = currentFilters.indexOf(filter);
+    if (idx >= 0) {
+      currentFilters.splice(idx, 1);
+    } else {
+      currentFilters.push(filter);
+    }
+  }
+
+  // ボタンラベルを更新
+  const label = currentFilters.length === 0 ? "すべて"
+    : currentFilters.length === 1
+      ? (FILTER_LABELS[currentFilters[0]] || currentFilters[0].replace("cat:", ""))
+      : `${currentFilters.length}件選択中`;
+  document.getElementById("filterLabel").textContent = label;
+
   updateActiveTags();
+  updateDropdownHighlight();
   renderList();
 }
 
@@ -149,6 +167,7 @@ function setPriceFilter(price) {
   currentPrice = price;
   closeAllDropdowns();
   updateActiveTags();
+  updateDropdownHighlight();
   renderList();
 }
 
@@ -158,16 +177,63 @@ function updateCategoryFilter() {
   const container = document.getElementById("categoryFilterItems");
   if (!container) return;
   container.innerHTML = cats.map(cat =>
-    `<div class="dropdown-item" onclick="setFilter('cat:${cat}')">${cat}</div>`
+    `<div class="dropdown-item ${currentFilter === 'cat:' + cat ? 'selected' : ''}" onclick="setFilter('cat:${cat}')">
+      <span class="dropdown-check">${currentFilter === 'cat:' + cat ? '✓' : ''}</span>${cat}
+    </div>`
   ).join("");
+}
+
+// ドロップダウンの選択中アイテムをハイライト
+function updateDropdownHighlight() {
+  // 並び替えメニュー
+  document.querySelectorAll("#sortMenu .dropdown-item").forEach(el => {
+    const match = (el.getAttribute("onclick") || "").match(/setSort\('(.+?)'\)/);
+    if (!match) return;
+    const val = match[1];
+    el.classList.toggle("selected", val === currentSort);
+    const check = el.querySelector(".dropdown-check");
+    if (check) check.textContent = val === currentSort ? "✓" : "";
+  });
+
+  // フィルターメニュー
+  document.querySelectorAll("#filterMenu .dropdown-item").forEach(el => {
+    const onclick = el.getAttribute("onclick") || "";
+    const filterMatch = onclick.match(/setFilter\('(.+?)'\)/);
+    const priceMatch  = onclick.match(/setPriceFilter\('(.+?)'\)/);
+    const check = el.querySelector(".dropdown-check");
+
+    if (filterMatch) {
+      const val = filterMatch[1];
+      const isSelected = val === "all"
+        ? currentFilters.length === 0
+        : currentFilters.includes(val);
+      el.classList.toggle("selected", isSelected);
+      if (check) check.textContent = isSelected ? "✓" : "";
+    }
+    if (priceMatch) {
+      const val = priceMatch[1];
+      el.classList.toggle("selected", val === currentPrice);
+      if (check) check.textContent = val === currentPrice ? "✓" : "";
+    }
+  });
+
+  // カテゴリフィルターも更新
+  updateCategoryFilter();
 }
 
 // アクティブフィルタータグを更新
 function updateActiveTags() {
   const tags = [];
-  if (currentSort !== "default") tags.push({ label: SORT_LABELS[currentSort], clear: () => setSort("default") });
-  if (currentFilter !== "all")   tags.push({ label: FILTER_LABELS[currentFilter] || currentFilter.replace("cat:", ""), clear: () => setFilter("all") });
-  if (currentPrice !== "all")    tags.push({ label: PRICE_LABELS[currentPrice], clear: () => setPriceFilter("all") });
+  if (currentSort !== "default") {
+    tags.push({ label: SORT_LABELS[currentSort], clear: () => setSort("default") });
+  }
+  currentFilters.forEach(f => {
+    const label = FILTER_LABELS[f] || f.replace("cat:", "");
+    tags.push({ label, clear: () => setFilter(f) });
+  });
+  if (currentPrice !== "all") {
+    tags.push({ label: PRICE_LABELS[currentPrice], clear: () => setPriceFilter("all") });
+  }
 
   const el = document.getElementById("activeTags");
   if (!el) return;
@@ -176,7 +242,6 @@ function updateActiveTags() {
       ${t.label} ✕
     </span>
   `).join("");
-  // clearTag用にタグ情報を保存
   el._tags = tags;
 }
 
@@ -228,15 +293,17 @@ function renderList() {
     (item.category || "").includes(search)
   );
 
-  // 在庫状況フィルター
-  if (currentFilter === "in_stock")      filtered = filtered.filter(i => i.stock > LOW);
-  else if (currentFilter === "low_stock")     filtered = filtered.filter(i => i.stock > 0 && i.stock <= LOW);
-  else if (currentFilter === "out_of_stock")  filtered = filtered.filter(i => i.stock === 0);
-
-  // カテゴリフィルター
-  if (currentFilter.startsWith("cat:")) {
-    const cat = currentFilter.slice(4);
-    filtered = filtered.filter(i => (i.category || "") === cat);
+  // 在庫状況・カテゴリフィルター（複数選択対応）
+  if (currentFilters.length > 0) {
+    filtered = filtered.filter(item => {
+      return currentFilters.some(f => {
+        if (f === "in_stock")     return item.stock > LOW;
+        if (f === "low_stock")    return item.stock > 0 && item.stock <= LOW;
+        if (f === "out_of_stock") return item.stock === 0;
+        if (f.startsWith("cat:")) return (item.category || "") === f.slice(4);
+        return true;
+      });
+    });
   }
 
   // 価格帯フィルター
