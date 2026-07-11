@@ -1534,12 +1534,9 @@ main {
   .card-stock-display .stock-num { font-size: 18px; }
   .card-stock-label { font-size: 8px; letter-spacing: 0; }
 
-  /* グリッド3列 → 2列 */
-  .view-grid3 { grid-template-columns: repeat(2, 1fr); }
-
-  .grid-name { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .grid-meta { font-size: 10px; }
-  .grid-price { font-size: 12px; }
+  .grid-name { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .grid-meta { font-size: 9px; }
+  .grid-price { font-size: 11px; }
 
   /* モーダル */
   .modal { padding: 18px 14px; border-radius: 12px; }
